@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lucky Dice Cup - Neon Edition</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- Configure Tailwind custom neon colors -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            neonPink: '#FF00FF',    // Neon Pink
+            neonBlue: '#00FFFF',    // Neon Blue
+            neonPurple: '#9D00FF',  // Neon Purple
+            neonGreen: '#39FF14',   // Neon Green
+            dark: '#0A0A16',        // Dark background
+          },
+          fontFamily: {
+            sans: ['Orbitron', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .dice-shadow {
+        box-shadow: inset -3px -3px 6px rgba(0, 0, 0, 0.5), 
+                    inset 3px 3px 6px rgba(255, 255, 255, 0.2);
+      }
+      .cup-shadow {
+        box-shadow: 0 0 15px rgba(157, 0, 255, 0.5),
+                    0 10px 30px rgba(0, 0, 0, 0.4),
+                    inset 0 5px 15px rgba(255, 255, 255, 0.1);
+      }
+      .neon-border {
+        box-shadow: 0 0 5px theme('colors.neonBlue'),
+                    inset 0 0 5px theme('colors.neonBlue');
+      }
+      .neon-border-pink {
+        box-shadow: 0 0 5px theme('colors.neonPink'),
+                    inset 0 0 5px theme('colors.neonPink');
+      }
+      .neon-border-green {
+        box-shadow: 0 0 5px theme('colors.neonGreen'),
+                    inset 0 0 5px theme('colors.neonGreen');
+      }
+      .neon-text {
+        text-shadow: 0 0 5px currentColor,
+                     0 0 10px currentColor,
+                     0 0 20px currentColor;
+      }
+      .shake {
+        animation: shake 0.8s cubic-bezier(.36,.07,.19,.97) both;
+      }
+      .float {
+        animation: float 3s ease-in-out infinite;
+      }
+      .pulse-neon {
+        animation: pulse-neon 2s infinite;
+      }
+      .bg-glass {
+        background: rgba(10, 10, 22, 0.6);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+    }
+    
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0) rotate(-1deg); }
+      20%, 80% { transform: translate3d(2px, 0, 0) rotate(1deg); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0) rotate(-2deg); }
+      40%, 60% { transform: translate3d(4px, 0, 0) rotate(2deg); }
+    }
+    
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+    
+    @keyframes pulse-neon {
+      0%, 100% { box-shadow: 0 0 10px rgba(0, 255, 255, 0.5), 0 0 20px rgba(0, 255, 255, 0.3); }
+      50% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.8), 0 0 30px rgba(0, 255, 255, 0.5); }
+    }
+  </style>
+  
+  <!-- Import neon style font -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-dark via-[#121230] to-[#1a0b2e] min-h-screen font-sans text-white flex flex-col">
+  <!-- Top Navigation -->
+  <header class="py-4 px-6 md:px-12 bg-glass border-b border-neonBlue/30">
+    <div class="container mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <i class="fa fa-dice text-neonBlue text-2xl neon-text"></i>
+        <h1 class="text-xl md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neonBlue to-neonPink neon-text">Lucky Dice Cup</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <button id="sound-toggle" class="p-2 rounded-full hover:bg-neonBlue/20 transition-all">
+          <i class="fa fa-volume-up text-neonBlue/80"></i>
+        </button>
+        <button id="help-btn" class="p-2 rounded-full hover:bg-neonBlue/20 transition-all">
+          <i class="fa fa-question text-neonBlue/80"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Game Area -->
+  <main class="flex-grow container mx-auto px-4 py-8 md:py-16 flex flex-col items-center justify-center">
+    <!-- Game Status and Scores -->
+    <div class="w-full max-w-2xl mb-8 flex justify-between items-center">
+      <div class="bg-glass rounded-lg p-4 border border-neonBlue/30 neon-border">
+        <p class="text-sm text-white/70">Total Rolls</p>
+        <p id="total-rolls" class="text-2xl font-bold text-neonBlue neon-text">0</p>
+      </div>
+      <div class="bg-glass rounded-lg p-4 border border-neonPink/30 neon-border-pink">
+        <p class="text-sm text-white/70">Current Streak</p>
+        <p id="streak" class="text-2xl font-bold text-neonPink neon-text">0</p>
+      </div>
+      <div class="bg-glass rounded-lg p-4 border border-neonGreen/30">
+        <p class="text-sm text-white/70">Max Streak</p>
+        <p id="max-streak" class="text-2xl font-bold text-neonGreen neon-text">0</p>
+      </div>
+    </div>
+    
+    <!-- Betting Area -->
+    <div class="w-full max-w-md mb-8 bg-glass rounded-xl p-6 border border-neonPurple/30">
+      <h2 class="text-center text-xl mb-4 font-semibold text-neonPurple neon-text">Choose Your Bet</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <button class="bet-btn py-4 rounded-lg bg-dark/60 hover:bg-neonBlue/20 transition-all border border-neonBlue/30 text-neonBlue hover:neon-border text-lg" data-bet="small">Small (3-10)</button>
+        <button class="bet-btn py-4 rounded-lg bg-dark/60 hover:bg-neonPink/20 transition-all border border-neonPink/30 text-neonPink hover:neon-border-pink text-lg" data-bet="big">Big (11-18)</button>
+        <button class="bet-btn py-4 rounded-lg bg-dark/60 hover:bg-neonGreen/20 transition-all border border-neonGreen/30 text-neonGreen hover:neon-border-green text-lg" data-bet="odd">Odd</button>
+        <button class="bet-btn py-4 rounded-lg bg-dark/60 hover:bg-neonPurple/20 transition-all border border-neonPurple/30 text-neonPurple hover:neon-border text-lg" data-bet="even">Even</button>
+      </div>
+      <div id="selected-bet" class="mt-4 text-center text-neonPurple neon-text hidden">
+        You selected: <span id="bet-display"></span>
+      </div>
+    </div>
+    
+    <!-- Dice Cup Area -->
+    <div class="relative mb-10">
+      <!-- Dice Cup Base -->
+      <div class="w-64 h-8 bg-gradient-to-r from-neonPurple/30 to-neonBlue/30 rounded-full mx-auto mb-1"></div>
+      
+      <!-- Dice Cup -->
+      <div id="dice-cup" class="cup-shadow w-64 h-80 bg-gradient-to-b from-dark to-[#1a0b2e] rounded-t-3xl rounded-b-2xl relative overflow-hidden mx-auto flex items-center justify-center border border-neonPurple/50">
+        <!-- Dice Cup Lid -->
+        <div id="cup-lid" class="absolute top-0 left-0 right-0 h-16 bg-gradient-to-r from-neonPink/50 to-neonPurple/50 rounded-t-3xl border-b-2 border-neonBlue/30"></div>
+        
+        <!-- Dice Container -->
+        <div id="dice-container" class="relative w-48 h-48 flex items-center justify-center perspective-100">
+          <!-- Three Dice -->
+          <div id="dice-1" class="dice-shadow absolute w-16 h-16 bg-dark border border-neonBlue/50 rounded-lg flex items-center justify-center text-neonBlue text-2xl font-bold opacity-0 transition-opacity neon-text">1</div>
+          <div id="dice-2" class="dice-shadow absolute w-16 h-16 bg-dark border border-neonPink/50 rounded-lg flex items-center justify-center text-neonPink text-2xl font-bold opacity-0 transition-opacity neon-text">2</div>
+          <div id="dice-3" class="dice-shadow absolute w-16 h-16 bg-dark border border-neonGreen/50 rounded-lg flex items-center justify-center text-neonGreen text-2xl font-bold opacity-0 transition-opacity neon-text">3</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Control Button -->
+    <button id="roll-btn" class="bg-dark border-2 border-neonBlue text-neonBlue font-bold py-4 px-12 rounded-full transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-neonBlue disabled:opacity-50 disabled:cursor-not-allowed pulse-neon text-lg neon-text">
+      Roll the Dice
+    </button>
+    
+    <!-- Result Display -->
+    <div id="result" class="mt-8 text-center text-xl md:text-2xl font-bold opacity-0 transition-opacity"></div>
+    
+    <!-- Mobile QR Code Area -->
+    <div class="mt-12 w-full max-w-md bg-glass rounded-xl p-6 border border-neonGreen/30 text-center">
+      <h2 class="text-xl mb-4 font-semibold text-neonGreen neon-text">Play on Mobile</h2>
+      <p class="text-white/70 mb-6">Scan the QR code below to continue playing on your mobile phone, anytime and anywhere!</p>
+      <div class="bg-white p-4 rounded-lg inline-block mx-auto">
+        <img src="images/QRcode2.png" alt="Scan to play on mobile" class="w-48 h-48 object-contain" />
+      </div>
+    </div>
+  </main>
+
+  <!-- Game Rules Modal -->
+  <div id="help-modal" class="fixed inset-0 bg-dark/90 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-glass border border-neonPurple/30 rounded-xl p-6 max-w-md w-full mx-4">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-neonPurple neon-text">Game Rules</h2>
+        <button id="close-help" class="text-white/70 hover:text-white">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <div class="space-y-4 text-white/80">
+        <p>1. Choose your bet type: Small (3-10), Big (11-18), Odd, or Even</p>
+        <p>2. Click the "Roll the Dice" button to shake the dice cup</p>
+        <p>3. The sum of the three dice determines the outcome</p>
+        <p>4. Correct guesses increase your streak; wrong guesses reset it</p>
+        <p>5. Try to beat your maximum streak record!</p>
+      </div>
+      <button id="start-playing" class="mt-6 w-full bg-dark border border-neonPink text-neonPink hover:bg-neonPink/20 font-bold py-3 rounded-lg transition-all neon-text">
+        Start Playing
+      </button>
+    </div>
+  </div>
+
+  <footer class="py-4 px-6 bg-glass border-t border-neonBlue/30 text-center text-white/60 text-sm">
+    <p>© 2023 Neon Dice Cup | For Entertainment Only</p>
+  </footer>
+
+  <script>
+    // Game state variables
+    const gameState = {
+      selectedBet: null,
+      totalRolls: 0,
+      currentStreak: 0,
+      maxStreak: 0,
+      isRolling: false,
+      soundEnabled: true
+    };
+    
+    // DOM Elements
+    const rollBtn = document.getElementById('roll-btn');
+    const diceCup = document.getElementById('dice-cup');
+    const cupLid = document.getElementById('cup-lid');
+    const diceContainer = document.getElementById('dice-container');
+    const dice1 = document.getElementById('dice-1');
+    const dice2 = document.getElementById('dice-2');
+    const dice3 = document.getElementById('dice-3');
+    const resultEl = document.getElementById('result');
+    const betBtns = document.querySelectorAll('.bet-btn');
+    const selectedBetEl = document.getElementById('selected-bet');
+    const betDisplayEl = document.getElementById('bet-display');
+    const totalRollsEl = document.getElementById('total-rolls');
+    const streakEl = document.getElementById('streak');
+    const maxStreakEl = document.getElementById('max-streak');
+    const soundToggle = document.getElementById('sound-toggle');
+    const helpBtn = document.getElementById('help-btn');
+    const helpModal = document.getElementById('help-modal');
+    const closeHelp = document.getElementById('close-help');
+    const startPlaying = document.getElementById('start-playing');
+    
+    // Sound effects
+    const shakeSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-dice-shake-1932.mp3');
+    const winSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3');
+    const loseSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3');
+    
+    // Initialization
+    function init() {
+      // Show help modal
+      helpModal.classList.remove('hidden');
+      
+      // Bind event listeners
+      rollBtn.addEventListener('click', rollDice);
+      betBtns.forEach(btn => btn.addEventListener('click', selectBet));
+      soundToggle.addEventListener('click', toggleSound);
+      helpBtn.addEventListener('click', () => helpModal.classList.remove('hidden'));
+      closeHelp.addEventListener('click', () => helpModal.classList.add('hidden'));
+      startPlaying.addEventListener('click', () => helpModal.classList.add('hidden'));
+      
+      // Update UI
+      updateStats();
+    }
+    
+    // Select bet
+    function selectBet(e) {
+      if (gameState.isRolling) return;
+      
+      // Reset all bet button styles
+      betBtns.forEach(btn => {
+        btn.classList.remove('bg-neonBlue/20', 'neon-border', 
+                          'bg-neonPink/20', 'neon-border-pink',
+                          'bg-neonGreen/20', 'neon-border-green',
+                          'bg-neonPurple/20');
+        btn.classList.add('bg-dark/60');
+      });
+      
+      // Set selected bet
+      gameState.selectedBet = e.target.dataset.bet;
+      
+      // Update selected button style
+      switch(gameState.selectedBet) {
+        case 'small':
+          e.target.classList.remove('bg-dark/60');
+          e.target.classList.add('bg-neonBlue/20', 'neon-border');
+          break;
+        case 'big':
+          e.target.classList.remove('bg-dark/60');
+          e.target.classList.add('bg-neonPink/20', 'neon-border-pink');
+          break;
+        case 'odd':
+          e.target.classList.remove('bg-dark/60');
+          e.target.classList.add('bg-neonGreen/20', 'neon-border-green');
+          break;
+        case 'even':
+          e.target.classList.remove('bg-dark/60');
+          e.target.classList.add('bg-neonPurple/20', 'neon-border');
+          break;
+      }
+      
+      // Show selected bet
+      selectedBetEl.classList.remove('hidden');
+      const betNames = {
+        'small': 'Small (3-10)',
+        'big': 'Big (11-18)',
+        'odd': 'Odd',
+        'even': 'Even'
+      };
+      betDisplayEl.textContent = betNames[gameState.selectedBet];
+    }
+    
+    // Roll dice
+    function rollDice() {
+      // Check if bet is selected
+      if (!gameState.selectedBet) {
+        showResult('Please select a bet type first', 'text-neonPurple neon-text');
+        return;
+      }
+      
+      // Check if rolling is in progress
+      if (gameState.isRolling) return;
+      
+      // Set game state
+      gameState.isRolling = true;
+      rollBtn.disabled = true;
+      
+      // Reset result display
+      resultEl.style.opacity = '0';
+      
+      // Hide dice
+      [dice1, dice2, dice3].forEach(dice => {
+        dice.style.opacity = '0';
+      });
+      
+      // Play shake sound
+      playSound(shakeSound);
+      
+      // Shake dice cup animation
+      diceCup.classList.add('shake');
+      cupLid.classList.add('shake');
+      
+      // Generate random dice values
+      const diceValues = [
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1,
+        Math.floor(Math.random() * 6) + 1
+      ];
+      const total = diceValues.reduce((a, b) => a + b, 0);
+      
+      // Show results after delay
+      setTimeout(() => {
+        // Stop shake animation
+        diceCup.classList.remove('shake');
+        cupLid.classList.remove('shake');
+        
+        // Show dice
+        setTimeout(() => {
+          // Set dice positions and values
+          dice1.textContent = diceValues[0];
+          dice2.textContent = diceValues[1];
+          dice3.textContent = diceValues[2];
+          
+          // Random positions for realism
+          dice1.style.transform = `translate(-20px, -10px)`;
+          dice2.style.transform = `translate(20px, 10px)`;
+          dice3.style.transform = `translate(0, -15px)`;
+          
+          // Show dice
+          [dice1, dice2, dice3].forEach(dice => {
+            dice.style.opacity = '1';
+          });
+          
+          // Determine result
+          determineResult(total);
+          
+          // Update statistics
+          gameState.totalRolls++;
+          updateStats();
+          
+          // Reset game state
+          gameState.isRolling = false;
+          rollBtn.disabled = false;
+        }, 300);
+      }, 1500);
+    }
+    
+    // Determine result
+    function determineResult(total) {
+      let result, isWin = false, colorClass;
+      
+      // Determine win/loss
+      switch(gameState.selectedBet) {
+        case 'small':
+          isWin = total >= 3 && total <= 10;
+          result = isWin ? `Congratulations! Total is ${total}, Small!` : `Sorry, total is ${total}, not Small!`;
+          colorClass = isWin ? 'text-neonBlue neon-text' : 'text-neonPink neon-text';
+          break;
+        case 'big':
+          isWin = total >= 11 && total <= 18;
+          result = isWin ? `Congratulations! Total is ${total}, Big!` : `Sorry, total is ${total}, not Big!`;
+          colorClass = isWin ? 'text-neonPink neon-text' : 'text-neonBlue neon-text';
+          break;
+        case 'odd':
+          isWin = total % 2 !== 0;
+          result = isWin ? `Congratulations! Total is ${total}, Odd!` : `Sorry, total is ${total}, not Odd!`;
+          colorClass = isWin ? 'text-neonGreen neon-text' : 'text-neonPurple neon-text';
+          break;
+        case 'even':
+          isWin = total % 2 === 0;
+          result = isWin ? `Congratulations! Total is ${total}, Even!` : `Sorry, total is ${total}, not Even!`;
+          colorClass = isWin ? 'text-neonPurple neon-text' : 'text-neonGreen neon-text';
+          break;
+      }
+      
+      // Update streak
+      if (isWin) {
+        gameState.currentStreak++;
+        gameState.maxStreak = Math.max(gameState.maxStreak, gameState.currentStreak);
+        playSound(winSound);
+      } else {
+        gameState.currentStreak = 0;
+        playSound(loseSound);
+      }
+      
+      // Show result
+      showResult(result, colorClass);
+    }
+    
+    // Show result
+    function showResult(text, className) {
+      resultEl.textContent = text;
+      resultEl.className = `mt-8 text-center text-xl md:text-2xl font-bold ${className}`;
+      resultEl.style.opacity = '1';
+    }
+    
+    // Update statistics
+    function updateStats() {
+      totalRollsEl.textContent = gameState.totalRolls;
+      streakEl.textContent = gameState.currentStreak;
+      maxStreakEl.textContent = gameState.maxStreak;
+    }
+    
+    // Toggle sound
+    function toggleSound() {
+      gameState.soundEnabled = !gameState.soundEnabled;
+      const icon = soundToggle.querySelector('i');
+      
+      if (gameState.soundEnabled) {
+        icon.classList.remove('fa-volume-off');
+        icon.classList.add('fa-volume-up');
+      } else {
+        icon.classList.remove('fa-volume-up');
+        icon.classList.add('fa-volume-off');
+      }
+    }
+    
+    // Play sound
+    function playSound(sound) {
+      if (gameState.soundEnabled) {
+        sound.currentTime = 0;
+        sound.play().catch(e => console.log('Sound playback failed:', e));
+      }
+    }
+    
+    // Initialize game
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
